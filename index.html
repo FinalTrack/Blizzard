@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Blizzard(Demo)</title>
+</head>
+<body>
+
+<canvas id = "canvas" width = "800" height = "600"></canvas>
+
+<script src = "./scripts/audio.js"></script>
+<script src = "./scripts/map.js"></script>
+<script src = "./scripts/hitboxMap.js"></script>
+<script src = "./scripts/hitbox.js"></script>
+<script src = "./scripts/platforms.js"></script>
+<script src = "./scripts/enemies.js"></script>
+<script src = "./scripts/papers.js"></script>
+<script src = "./scripts/instructions.js"></script>
+<script>
+
+var canvas = document.getElementById("canvas");
+var pen = canvas.getContext("2d");
+pen.globalAlpha = 1;
+
+var w = canvas.width/2;
+var h = canvas.height/2;
+
+var respawnX = 250;
+var respawnY = 1650;
+
+var camX = respawnX;
+var camY = respawnY;
+var targetZoom = 1.5;
+var zoom = targetZoom;
+
+var menu = false;
+var lock = true;
+var begin = true;
+
+var sky = new Image();
+sky.src = "./background/sky.png";
+
+var underground = new Image();
+underground.src = "./background/underground.png";
+
+var ending = new Image();
+ending.src = "./background/end.png";
+
+var tree1 = new Image();
+tree1.src = "./background/tree1.png";
+var tree2 = new Image();
+tree2.src = "./background/tree2.png";
+var tree3 = new Image();
+tree3.src = "./background/tree3.png";
+var tree4 = new Image();
+tree4.src = "./background/tree4.png";
+
+var cave1 = new Image();
+cave1.src = "./background/cave1.png";
+var cave2 = new Image();
+cave2.src = "./background/cave2.png";
+var cave3 = new Image();
+cave3.src = "./background/cave3.png";
+var cave4 = new Image();
+cave4.src = "./background/cave4.png";
+
+var glow = new Image();
+glow.src = "./background/glow.png";
+var glow1 = new Image();
+glow1.src = "./background/glow1.png";
+
+
+var partX = 0;
+var partY = 0;
+var snow = new Image();
+snow.src = "./background/snow.png";
+
+var player = [];
+const playerCount = 40;
+for(var i = 0; i < playerCount; i++)
+{
+	player[i] = new Image();
+	player[i].src = "./player/player" + i + ".png";
+}
+
+var torches = [];
+for(var i = 0; i < 14; i++)
+{
+	torches[i] = new Image();
+	torches[i].src = "./torches/torch" + i + ".png";
+}
+var tIndex = 0;
+
+var dead1 = new Image();
+dead1.src = "./player/dead1.png";
+
+var dead2 = new Image();
+dead2.src = "./player/dead2.png";
+
+var playerHit = new hitbox(camX, camY, 50, 90, true);
+
+var death = 0;
+var deathX, deathY;
+
+var die = function()
+{
+	deathX = playerHit.cX;
+	deathY = playerHit.cY;
+	playerHit.cX = respawnX;
+	playerHit.cY = respawnY;
+	velX = 0;
+	velY = 0;
+	death = 1;
+}
+
+
+var tiles = [];
+const tileCount = 78;
+for(var i = 0; i < tileCount; i++)
+{
+	tiles[i] = new Image();
+	tiles[i].src = "./tiles/tile" + i + ".png";
+}
+
+var mapWidth = 200;
+var mapHeight = 50;
+
+keys = [];
+window.onkeydown = function(e) 
+{
+	keys[e.keyCode] = true;
+};
+window.onkeyup = function(e)
+{
+	keys[e.keyCode] = false;
+};
+
+var prevLeft = false, prevRight = false, prevZ = false, prevX = false;
+var page = 0;
+
+var main = function()
+{
+	var delta = Date.now() - time;
+	time = Date.now();
+	acc += delta;
+	
+	if(acc >= dT)
+	{
+		if(menu)
+		{
+			if(keys[37] && !prevLeft)
+			{
+				page--;
+				if(page < 0)
+					page = papers.length - 1;
+			}
+			if(keys[39] && !prevRight)
+			{
+				page++;
+				if(page >= papers.length)
+					page = 0;
+			}
+
+			if((keys[90] || keys[122]) && !prevZ)
+			{
+				menu = false;
+				lock = false;
+				begin = false;
+			}
+		}
+		else
+		{
+			update();
+			if((keys[88] || keys[120]) && !prevX && !lock)
+				menu = true;
+		}
+
+		if(keys[37])
+			prevLeft = true;
+		else
+			prevLeft = false;
+
+		if(keys[39])
+			prevRight = true;
+		else
+			prevRight = false;
+
+		if(keys[90] || keys[122])
+			prevZ = true;
+		else
+			prevZ = false;
+		if(keys[88] || keys[120])
+			prevX = true;
+		else
+			prevX = false;
+		
+		acc = 0;
+	}
+	if(timePassed < 4000)
+	{
+		pen.font = "48px sans-serif";
+		intro("Adithya Sunil presents", 160, 300, 0, 4000);
+	}
+	else if(timePassed < 8000)
+	{
+		pen.font = "32px sans-serif";
+		intro("A game made using pure javascript and no libraries", 35, 300, 4000, 8000);
+	}
+	else if(timePassed < 12000)
+	{
+		pen.font = "32px sans-serif";
+		intro("And 100% original artwork", 200, 300, 8000, 12000);
+	}
+	else if(timePassed < 16000)
+	{
+		pen.font = "96px sans-serif";
+		intro("BLIZZARD", 170, 300, 12000, 16000);
+	}
+	else
+		render();
+
+	if(timePassed < 16000)
+		timePassed += delta;
+
+	window.requestAnimationFrame(main);
+};
+
+var intro = function(text, x, y, startTime, endTime)
+{
+	pen.fillStyle = "#000000";
+	pen.fillRect(0, 0, 800, 600);
+	var a;
+	if(timePassed < startTime + 1000)
+		a = Math.floor(256 * (timePassed - startTime) / 1000);
+	else if(timePassed > endTime - 1000)
+		a = Math.floor(256 * (endTime - timePassed) / 1000);
+	else
+		a = 255;
+
+	pen.fillStyle = "rgb(" + a + ", " + a +  ", " + a + ")";
+	pen.fillText(text, x, y);
+}
+
+var parallax = function(p1, p2, p3, p4, bg)
+{
+	pen.drawImage(bg, 0, 0, canvas.width, canvas.height);
+
+	pen.drawImage(p4, -(camX/6 % canvas.width), 0, canvas.width, canvas.height);
+	pen.drawImage(p4, canvas.width - (camX/6 % canvas.width), 0, canvas.width, canvas.height);
+
+	pen.drawImage(p3, -(camX/5 % canvas.width), 0, canvas.width, canvas.height);
+	pen.drawImage(p3, canvas.width - (camX/5 % canvas.width), 0, canvas.width, canvas.height);
+
+	
+	pen.drawImage(p2, -(camX/4 % canvas.width), 0, canvas.width, canvas.height);
+	pen.drawImage(p2, canvas.width - (camX/4 % canvas.width), 0, canvas.width, canvas.height);
+
+	pen.drawImage(p1, -(camX/3 % canvas.width), 0, canvas.width, canvas.height);
+	pen.drawImage(p1, canvas.width - (camX/3 % canvas.width), 0, canvas.width, canvas.height);
+};
+
+var drawTiles = function()
+{
+	pen.strokeStyle = "#FF0000";
+	
+	var cornerX = camX - w/zoom;
+	var cornerY = camY - h/zoom;
+
+	var mapX = Math.floor(cornerX/100);
+	var startMapY = Math.floor(cornerY/100);
+	
+	var x = -(cornerX % 100) * zoom;
+	var startY = -(cornerY % 100) * zoom;
+	
+	var width = 100 * zoom;
+
+	while(x < canvas.width)
+	{
+		var y = startY;
+		mapY = startMapY;
+		while(y < canvas.height)
+		{
+			if(mapX >= 0 && mapX < mapWidth && mapY >= 0 && mapY < mapHeight)
+			{
+				var tileType = map[mapX][mapY];
+				if(tileType > 0)
+				{
+					if(tileType == 64)
+					{
+						if(mapX % 2 == 0)
+							tileType += Math.floor(lava / 10);
+						else
+							tileType += (7 - (Math.floor(lava / 10)));
+					}
+					pen.drawImage(tiles[tileType - 1], x, y, width + 1, width + 1);	
+				}
+			}
+			y += width;
+			mapY++;
+		}
+		x += width;
+		mapX++;
+
+	}
+};
+
+var render = function()
+{
+	if(camY < 2500)
+		parallax(tree1, tree2, tree3, tree4, sky);
+	else
+		parallax(cave1, cave2, cave3, cave4, underground);
+	
+	drawTiles();
+
+	for(var i = 0; i < platforms.length; i++)
+	{
+			var hit = platforms[i].hit;
+			draw(platforms[i].img, hit.cX - hit.sw, hit.cY - hit.sh, hit.ww, hit.hh);
+
+	}
+	
+	for(var i = 0; i < papers.length; i++)
+	{
+		var p = papers[i];
+		if(p.collect > 99)
+			continue;
+		else if(p.collect > 0)
+		{
+			pen.globalAlpha = (100 - p.collect)/100;
+		}
+		var tmp = Math.floor(pIndex / 10);
+		if(tmp == 0)
+			draw(paper1, p.x - 75, p.y - 75 + (8 * Math.sin(Date.now()/300)) - p.collect, 150, 150);
+		else if(tmp == 1)
+			draw(paper2, p.x - 75, p.y - 75 + (8 * Math.sin(Date.now()/300)) - p.collect, 150, 150);
+		else 
+			draw(paper3, p.x - 75, p.y - 75 + (8 * Math.sin(Date.now()/300)) - p.collect, 150, 150);
+		pen.globalAlpha = 1;
+	}
+	
+	for(var i = 0; i < enemies.length; i++)
+	{
+			var g = enemies[i];
+			if(g.kill)
+			{
+				if(deathX > g.x + 30)
+					draw(ghost3, g.x, g.y, 100, 160);
+				else
+					draw(ghost4, g.x, g.y, 100, 160);
+			}
+			else if(g.die == 0)
+			{
+				if(g.vel > 0)
+					draw(ghost1, g.x, g.y, 100, 160);
+				else
+					draw(ghost2, g.x, g.y, 100, 160);
+			}
+			else if(g.die < 100)
+			{
+				pen.globalAlpha = (100 - g.die)/100;
+				if(g.vel > 0)
+				{
+					if(g.die % 10 < 5)
+						draw(ghost5, g.x, g.y, 100, 160);
+					else
+						draw(ghost7, g.x, g.y, 100, 160);
+				}
+				else
+				{
+					if(g.die % 10 < 5)
+						draw(ghost6, g.x, g.y, 100, 160);
+					else
+						draw(ghost8, g.x, g.y, 100, 160);
+				}
+				pen.globalAlpha = 1;
+			}
+	}
+
+	if(death == 0)
+	{
+		draw(player[aIndex], playerHit.cX - playerHit.sw - 10, playerHit.cY - playerHit.sh - 35, 79, 143);
+	}
+	else 
+	{
+		pen.globalAlpha = Math.max((100 - death)/100, 0);
+		if(right)
+			draw(dead1, deathX - playerHit.sw - 10, deathY - death - playerHit.sh - 35, 79, 143);
+		else
+			draw(dead2, deathX - playerHit.sw - 10, deathY - death - playerHit.sh - 35, 79, 143);
+		pen.globalAlpha = 1;
+	}
+	if(tIndex > 0)
+	{
+		if(tIndex < 10)
+			pen.globalAlpha = 0.3;
+		else if(tIndex < 20)
+			pen.globalAlpha = 0.6;
+		else if(tIndex < 30)
+			pen.globalAlpha = 0.9;
+		else if(tIndex < 40)
+			pen.globalAlpha = 1;
+		else if(tIndex < 50)
+			pen.globalAlpha = 0.9
+		else if(tIndex < 60)
+			pen.globalAlpha = 0.6;
+		else
+			pen.globalAlpha = 0.3;
+
+		if(right)
+			draw(torches[Math.floor(tIndex / 10)], playerHit.cX, playerHit.cY - playerHit.sh, 100, 100);
+		else
+			draw(torches[7 + Math.floor(tIndex/10)], playerHit.cX - 2 * playerHit.ww + 8, playerHit.cY - playerHit.sh, 100, 100);
+		
+		pen.globalAlpha = 1;
+	}
+
+	if(camY < 2500)
+		particle(snow);
+
+	if(menu)
+	{
+		if(papers[page].collect > 0)
+			pen.drawImage(research[page], 0, 0, canvas.width, canvas.height);
+		else
+			pen.drawImage(unknown[page], 0, 0, canvas.width, canvas.height);
+	}
+	else
+	{
+		if(begin)
+			pen.drawImage(glow, 0, 0, canvas.width, canvas.height);
+		else
+			pen.drawImage(glow1, 0, 0, canvas.width, canvas.height);
+	}
+
+	if(!menu)
+	{
+		renderI();	
+		if(camY > 2500)
+			draw(ending, 8100, 3300, 351, 166);
+	}
+};
+
+var draw = function(img, x, y, ww, hh)
+{
+	pen.drawImage(img, w + (x - camX) * zoom, h + (y - camY) * zoom, ww * zoom, hh * zoom);
+};
+
+var particle = function(part)
+{
+	pen.drawImage(part, partX, partY, canvas.width, canvas.height);
+	pen.drawImage(part, partX, partY - canvas.height, canvas.width, canvas.height);
+	pen.drawImage(part, partX - canvas.width, partY, canvas.width, canvas.height);
+	pen.drawImage(part, partX - canvas.width, partY - canvas.height, canvas.width, canvas.height);
+};
+
+var pushX = 0, pushY = 0;
+var cTile = 0;
+
+var collideTile = function(hit, offsetX, offsetY)
+{
+	var tHit, index, collideX, collideY;
+	if(offsetX > 0)
+		collideX = Math.floor((hit.cX + hit.sw) / 100);
+	else
+		collideX = Math.floor((hit.cX - hit.sw) / 100);
+	if(offsetY > 0)
+		collideY = Math.floor((hit.cY + hit.sh) / 100);
+	else
+		collideY = Math.floor((hit.cY - hit.sh) / 100);
+
+	index = hitboxMap[collideX][collideY];
+	if(index > 0)
+	{
+		cTile = map[collideX][collideY] - 1; 
+		tHit = hitboxes[index - 1];
+		if(tHit.type)
+		{
+		var distX = Math.abs(tHit.cX + collideX * 100 - hit.cX);
+		var distY = Math.abs(tHit.cY + collideY * 100 - hit.cY);
+		var pX = hit.sw + tHit.sw - distX;
+		var pY = hit.sh + tHit.sh - distY;
+		if(pX > 0 && pY > 0)
+		{
+			pushX = Math.max(pushX, pX);
+			pushY = Math.max(pushY, pY);
+		}
+		}
+	}
+}
+
+var collideAll = function(hit)
+{
+	var tHit, index, collideX, collideY;
+
+	collideX = Math.floor((hit.cX + hit.sw) / 100);
+	collideY = Math.floor((hit.cY + hit.sh) / 100);
+	index = hitboxMap[collideX][collideY];
+	if(index > 0)
+	{
+		tHit = hitboxes[index - 1];
+		if(tHit.type)
+		{
+			var distX = Math.abs(tHit.cX + collideX * 100 - hit.cX);
+			var distY = Math.abs(tHit.cY + collideY * 100 - hit.cY);
+			if(hit.sw + tHit.sw - distX > 0 && hit.sh + tHit.sh - distY > 0)
+				return true;
+		}
+	}
+	collideX = Math.floor((hit.cX + hit.sw) / 100);
+	collideY = Math.floor((hit.cY - hit.sh) / 100);
+	index = hitboxMap[collideX][collideY];
+	if(index > 0)
+	{
+		tHit = hitboxes[index - 1];
+		if(tHit.type)
+		{
+			var distX = Math.abs(tHit.cX + collideX * 100 - hit.cX);
+			var distY = Math.abs(tHit.cY + collideY * 100 - hit.cY);
+			if(hit.sw + tHit.sw - distX > 0 && hit.sh + tHit.sh - distY > 0)
+				return true;
+		}
+	}
+	collideX = Math.floor((hit.cX - hit.sw) / 100);
+	collideY = Math.floor((hit.cY + hit.sh) / 100);
+	index = hitboxMap[collideX][collideY];
+	if(index > 0)
+	{
+		tHit = hitboxes[index - 1];
+		if(tHit.type)
+		{
+			var distX = Math.abs(tHit.cX + collideX * 100 - hit.cX);
+			var distY = Math.abs(tHit.cY + collideY * 100 - hit.cY);
+			if(hit.sw + tHit.sw - distX > 0 && hit.sh + tHit.sh - distY > 0)
+				return true;
+		}
+	}
+	collideX = Math.floor((hit.cX - hit.sw) / 100);
+	collideY = Math.floor((hit.cY - hit.sh) / 100);
+	index = hitboxMap[collideX][collideY];
+	if(index > 0)
+	{
+		tHit = hitboxes[index - 1];
+		if(tHit.type)
+		{
+			var distX = Math.abs(tHit.cX + collideX * 100 - hit.cX);
+			var distY = Math.abs(tHit.cY + collideY * 100 - hit.cY);
+			if(hit.sw + tHit.sw - distX > 0 && hit.sh + tHit.sh - distY > 0)
+				return true;
+		}
+	}
+	return false;
+}
+
+var collideHurt = function(hit)
+{
+	var tHit, index, collideX, collideY;
+
+	collideX = Math.floor((hit.cX + hit.sw) / 100);
+	collideY = Math.floor((hit.cY + hit.sh) / 100);
+	index = hitboxMap[collideX][collideY];
+	if(index > 0)
+	{
+		tHit = hitboxes[index - 1];
+		if(!tHit.type)
+		{
+			var distX = Math.abs(tHit.cX + collideX * 100 - hit.cX);
+			var distY = Math.abs(tHit.cY + collideY * 100 - hit.cY);
+			if(hit.sw + tHit.sw - distX > 0 && hit.sh + tHit.sh - distY > 0)
+				return true;
+		}
+	}
+	collideX = Math.floor((hit.cX + hit.sw) / 100);
+	collideY = Math.floor((hit.cY - hit.sh) / 100);
+	index = hitboxMap[collideX][collideY];
+	if(index > 0)
+	{
+		tHit = hitboxes[index - 1];
+		if(!tHit.type)
+		{
+			var distX = Math.abs(tHit.cX + collideX * 100 - hit.cX);
+			var distY = Math.abs(tHit.cY + collideY * 100 - hit.cY);
+			if(hit.sw + tHit.sw - distX > 0 && hit.sh + tHit.sh - distY > 0)
+				return true;
+		}
+	}
+	collideX = Math.floor((hit.cX - hit.sw) / 100);
+	collideY = Math.floor((hit.cY + hit.sh) / 100);
+	index = hitboxMap[collideX][collideY];
+	if(index > 0)
+	{
+		tHit = hitboxes[index - 1];
+		if(!tHit.type)
+		{
+			var distX = Math.abs(tHit.cX + collideX * 100 - hit.cX);
+			var distY = Math.abs(tHit.cY + collideY * 100 - hit.cY);
+			if(hit.sw + tHit.sw - distX > 0 && hit.sh + tHit.sh - distY > 0)
+				return true;
+		}
+	}
+	collideX = Math.floor((hit.cX - hit.sw) / 100);
+	collideY = Math.floor((hit.cY - hit.sh) / 100);
+	index = hitboxMap[collideX][collideY];
+	if(index > 0)
+	{
+		tHit = hitboxes[index - 1];
+		if(!tHit.type)
+		{
+			var distX = Math.abs(tHit.cX + collideX * 100 - hit.cX);
+			var distY = Math.abs(tHit.cY + collideY * 100 - hit.cY);
+			if(hit.sw + tHit.sw - distX > 0 && hit.sh + tHit.sh - distY > 0)
+				return true;
+		}
+	}
+	return false;
+}
+
+var collidePlatform = function(hit, activate)
+{
+	for(var i = 0; i < platforms.length; i++)
+	{
+		var pHit = platforms[i].hit;
+		var pX = hit.sw + pHit.sw - Math.abs(hit.cX - pHit.cX);
+		var pY = hit.sh + pHit.sh - Math.abs(hit.cY - pHit.cY);
+		if(pX > 0 && pY > 0)
+		{
+			cTile = 35;
+			if(activate && platforms[i].state == 0)
+				platforms[i].state = 1;
+			pushX = Math.max(pushX, pX);
+			pushY = Math.max(pushY, pY);
+		}
+	}
+}
+
+const colFix = 25;
+
+var escapeX = function(hit, pX, pY, pHit)
+{
+	if(pushX < colFix)
+	{
+		hit.cX -= pushX;
+		if(!collideAll(hit))
+			return;
+		hit.cX += 2 * pushX;
+		if(!collideAll(hit))
+			return;
+		hit.cX -= pushX;
+	}
+	hit.cY -= pY;
+	if(pX < colFix)
+	{
+		if(hit.cX > pHit.cX)
+			hit.cX += pX;
+		else
+			hit.cX -= pX;
+		if(!collideAll(hit))
+			return;
+	}
+	die();
+	crush.play();
+}
+
+var escapeY = function(hit, pX, pY, pHit)
+{
+	if(pushY < colFix)
+	{
+		hit.cY -= pushY;
+		if(!collideAll(hit))
+			return;
+		hit.cY += 2 * pushY;
+		if(!collideAll(hit))
+			return;
+		hit.cY -= pushY;
+	}
+	hit.cX -= pX;
+	if(pY < colFix)
+	{
+		if(hit.cY > pHit.cY)
+			hit.cY += pY;
+		else
+			hit.cY -= pY;
+		if(!collideAll(hit))
+			return;
+	}
+	die();
+	crush.play();
+}
+
+var pushPlayer = function(hit)
+{
+	for(var i = 0; i < platforms.length; i++)
+	{
+		if(platforms[i].vel == 0)
+			continue;
+		var pHit = platforms[i].hit;
+		if(platforms[i].up)
+		{
+			var correct = (hit.cY < pHit.cY) && (platforms[i].vel > 0);
+			if(correct)
+				pHit.cY -= (platforms[i].vel + 1);
+			var pX = hit.sw + pHit.sw - Math.abs(hit.cX - pHit.cX);
+			var pY = hit.sh + pHit.sh - Math.abs(hit.cY - pHit.cY);
+			if(pX > 0 && pY > 0)
+			{
+				if(correct)
+				{
+					pHit.cY += (platforms[i].vel + 1);
+					hit.cY += (platforms[i].vel + 1 - pY);
+					collideTile(hit, 1, 1);
+					collideTile(hit, -1, 1);
+					if(pushY > 0)
+						hit.cY -= pushY;
+					return;
+				}
+				if(hit.cY < pHit.cY)
+				{
+					hit.cY -= pY;
+					collideTile(hit, 1, -1);
+					collideTile(hit, -1, -1);
+					if(pushY > 0)
+						escapeX(hit, pX, -pushY, pHit);
+					return;
+				}
+				hit.cY += pY;
+				collideTile(hit, 1, 1);
+				collideTile(hit, -1, 1);
+				if(pushY > 0)
+					escapeX(hit, pX, pushY, pHit);
+				return;
+			}
+			else if(correct)
+				pHit.cY += (platforms[i].vel + 1);
+		}
+		else
+		{
+			pHit.cY -= 1;
+			var pX = hit.sw + pHit.sw - Math.abs(hit.cX - pHit.cX);
+			var pY = hit.sh + pHit.sh - Math.abs(hit.cY - pHit.cY);
+			if(pX > 0 && pY > 0)
+			{
+				pHit.cY += 1;
+				if(hit.cY > pHit.cY)
+					pY++;
+				else
+					pY--;
+				hit.cX += platforms[i].vel;
+				if(platforms[i].vel > 0)
+				{
+					collideTile(hit, 1, 1);
+					collideTile(hit, 1, -1);
+					if(pushX > 0 && !(pY > 0))
+						hit.cX -= pushX;
+					else if(pushX > 0 && pY > 0)
+						escapeY(hit, pushX, pY, pHit);
+					return;
+				}
+				collideTile(hit, -1, 1);
+				collideTile(hit, -1, -1);
+				if(pushX > 0 && !(pY > 0))
+					hit.cX += pushX;
+				else if(pushX > 0 && pY > 0)
+					escapeY(hit, pushX, pY, pHit);
+				return;
+			}	
+			else
+				pHit.cY += 1;
+		}
+	}
+};
+
+var collideGhost = function(hit)
+{
+	for(var i = 0; i < enemies.length; i++)
+	{
+		var g = enemies[i];
+		if(g.die > 0)
+			continue;
+		var distY = Math.abs(hit.cY - (g.y + 80))
+		if(distY > 100)
+			continue;
+		var distX = hit.cX - g.x;
+		if(g.vel > 0)
+		{
+			if(distX > 50 && distX < 220)
+			{
+				blaze.play();
+				die();
+				g.kill = true;
+				return;
+			}
+			if(distY < 80 && tIndex > 0 && tIndex < 50 && distX > -25 && distX < 120)
+			{
+				g.die = 1;	
+				blazeDie.play();
+			}
+		}
+		else
+		{
+			if(distX < 50 && distX > -150)
+			{
+				blaze.play();
+				die();
+				g.kill = true;
+				return;
+			}
+			if(distY < 80 && tIndex > 0 && tIndex < 50 && distX < 125 && distX > -50)
+			{
+				g.die = 1;	
+				blazeDie.play();
+			}
+		}
+	}	
+};
+
+var velX = 0, velY = 0;
+const gravity = 0.5;
+var ground = false;
+var prevUp = false;
+var prevSpace = false;
+
+var playerPhysics = function()
+{
+	pushX = 0;
+	pushY = 0;
+
+	pushPlayer(playerHit);
+
+if(!lock)
+{	
+	if(keys[39])
+	{
+		velX += 2.5;
+		if(!keys[37])
+			right = true;
+	}
+	if(keys[37])
+	{
+		velX -= 2.5;
+		if(!keys[39])
+			right = false;
+	}
+	velX *= 0.7;
+
+	if(keys[38])
+		velY += gravity;
+	else
+		velY += gravity * 2;
+	ground = false;
+	if(velY > 20)
+		velY = 20;
+	playerHit.cX += velX;
+	
+	pushX = 0;
+	pushY = 0;
+	
+	if(velX > 0)
+	{
+		collideTile(playerHit, 1, 1);
+		collideTile(playerHit, 1, -1);
+		collidePlatform(playerHit, false);
+		
+		if(pushX > 0)
+		{
+			velX = 0;
+			playerHit.cX -= pushX;
+		}
+	}
+	else if(velX < 0)
+	{
+
+		collideTile(playerHit, -1, 1);
+		collideTile(playerHit, -1, -1);
+		collidePlatform(playerHit, false);
+
+		if(pushX > 0)
+		{
+			velX = 0;
+			playerHit.cX += pushX;
+		}
+	}
+	
+	playerHit.cY += velY;
+
+	pushX = 0;
+	pushY = 0;
+
+	if(velY > 0)
+	{
+		collideTile(playerHit, 1, 1);
+		collideTile(playerHit, -1, 1);
+		collidePlatform(playerHit, true);
+
+		if(pushY > 0)
+		{
+			if(keys[38] && !prevUp)
+				velY = -15;
+			else
+			{
+				if(velY > 10)
+					playSound(cTile);
+				velY = 0;
+			}
+			playerHit.cY -= pushY;
+			ground = true;
+		}
+	}
+	else if(velY < 0)
+	{
+		collideTile(playerHit, 1, -1);
+		collideTile(playerHit, -1, -1);
+		collidePlatform(playerHit, false);
+
+		if(pushY > 0)
+		{
+			velY = 0;
+			playerHit.cY += pushY;
+		}
+	}
+}
+
+	if(collideHurt(playerHit))
+	{
+		die();
+		crush.play();
+	}
+	else
+	{
+		collideGhost(playerHit);
+	}
+
+	for(var i = 0; i < papers.length; i++)
+	{
+		updatePaper(papers[i]);
+	}
+}
+
+var right = true;
+var update = function()
+{
+	for(var i = 0; i < platforms.length; i++)
+		movePlatform(platforms[i]);
+	for(var i = 0; i < enemies.length; i++)
+		moveGhost(enemies[i]);
+	
+	if(death == 0)
+		playerPhysics();
+	else
+	{
+		death++;
+		if(death > 100)
+			death = 0;
+	}
+	
+	if(keys[38])
+		prevUp = true;
+	else
+		prevUp = false;
+
+	if(keys[32])
+	{
+		if(!prevSpace)
+		{
+			if(tIndex == 0  && !lock)
+			{
+				tIndex = 1;
+				if(currentI == 5)
+					targetI = 7;
+				fire.play();
+			}		
+		}
+		prevSpace = true;
+	}
+	else
+		prevSpace = false;
+	
+	if(playerHit.cX > 2100)
+		targetZoom = 0.8;
+
+	zoom += (targetZoom - zoom) * 0.05;
+	if(death == 0)
+	{
+		camX += (playerHit.cX - camX) * 0.2;
+		camY += (playerHit.cY - camY) * 0.2;
+	}
+	else
+	{
+		camX += (deathX - camX) * 0.2;
+		camY += (deathY - camY) * 0.2;
+	}
+
+	camX = Math.max(w/zoom + 1, camX);
+	camY = Math.max(h/zoom + 1, camY);
+
+	partX += 5;
+	partY += 5;
+	partX = partX % canvas.width;
+	partY = partY % canvas.height;
+	lava++;
+	lava = lava % 80;
+
+	if(timePassed >= 16000)
+		updateI();
+
+if(!lock)
+{
+	if(ground)
+	{
+		if(right)
+		{
+			if(velX > 2)
+			{
+				animate(6, 17, 2, 2);
+				if(aIndex == 17)
+					playSound(cTile);
+			}
+			else
+				animate(0, 5, 7, 1);
+		}
+		else
+		{
+			if(velX < -2)
+			{
+				animate(24, 35, 2, 4);
+				if(aIndex == 35)
+					playSound(cTile);
+			}
+			else
+				animate(18, 23, 7, 3);
+		}
+	}
+	else if(velY < -2)
+	{
+		if(right)
+			aIndex = 36;
+		else
+			aIndex = 38;
+	}
+	else if(velY > 2)
+	{
+		if(right)
+			aIndex = 37;
+		else
+			aIndex = 39;
+	}
+	else
+	{
+		if(right)
+			aIndex = 6;
+		else
+			aIndex = 24;
+	}
+}
+
+	if(tIndex > 0)
+	{
+		tIndex += 2;
+		if(tIndex > 69)
+			tIndex = 0;
+	}
+	pIndex++;
+	if(pIndex > 30)
+		pIndex = 0;
+};
+
+var aType = 0;
+var aFrame = 0;
+var aIndex = 0;
+var lava = 0;
+var pIndex = 0;
+
+var animate = function(init, final, gap, type)
+{
+	if(type != aType)
+	{
+		aType = type;
+		frame = 0;
+		aIndex = init;
+	}
+	else
+	{
+		frame++;
+		if(frame >= gap)
+		{
+			frame = 0;
+			aIndex++;
+			if(aIndex > final)
+				aIndex = init;
+		}
+	}
+		
+};
+	
+const dT = 10;
+var acc = 0;
+var time = Date.now() - dT;
+var timePassed = 0;
+main();
+
+</script>
+</body>
+</html>
+
