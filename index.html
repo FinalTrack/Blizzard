@@ -198,27 +198,17 @@ var main = function()
 	if(timePassed < 4000)
 	{
 		pen.font = "48px sans-serif";
-		intro("Adithya Sunil presents", 160, 300, 0, 4000);
+		intro("FinalTrack presents", 160, 300, 0, 4000);
 	}
 	else if(timePassed < 8000)
 	{
-		pen.font = "32px sans-serif";
-		intro("A game made using pure javascript and no libraries", 35, 300, 4000, 8000);
-	}
-	else if(timePassed < 12000)
-	{
-		pen.font = "32px sans-serif";
-		intro("And 100% original artwork", 200, 300, 8000, 12000);
-	}
-	else if(timePassed < 16000)
-	{
 		pen.font = "96px sans-serif";
-		intro("BLIZZARD", 170, 300, 12000, 16000);
+		intro("BLIZZARD", 170, 300, 4000, 8000);
 	}
 	else
 		render();
 
-	if(timePassed < 16000)
+	if(timePassed < 8000)
 		timePassed += delta;
 
 	window.requestAnimationFrame(main);
@@ -960,7 +950,7 @@ var update = function()
 	{
 		if(!prevSpace)
 		{
-			if(tIndex == 0  && !lock)
+			if(tIndex == 0  && !lock && death == 0)
 			{
 				tIndex = 1;
 				if(currentI == 5)
@@ -998,7 +988,7 @@ var update = function()
 	lava++;
 	lava = lava % 80;
 
-	if(timePassed >= 16000)
+	if(timePassed >= 8000)
 		updateI();
 
 if(!lock)
@@ -1054,7 +1044,7 @@ if(!lock)
 	if(tIndex > 0)
 	{
 		tIndex += 2;
-		if(tIndex > 69)
+		if(tIndex > 69 || death > 0)
 			tIndex = 0;
 	}
 	pIndex++;
