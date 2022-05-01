@@ -1,5 +1,7 @@
 HOW TO PLAY: To play Blizzard, download the code in the repository as a zip file. Once downloaded, extract its contents. Inside the folder, navigate to "index.html" and click on it to start the game!
 
+VIDEO DEMO: https://www.youtube.com/watch?v=jTFhtB6aDcw
+
 ABOUT THE PROJECT: Blizzard is a 2d side scrolling platformer game designed to be launched on the web. In it, you play as a character searching for her brother, who disappeared after going to the deserted town called "Bandonville" to study its history. You have to find the research papers he left behind, scattered throughout the town, and learn about the town's mysterious past. Note that the game is still in its demo version, and the story has not been finished. The game tries to focus extensively on the art and atmosphere of the settings to make it appear gloomy and haunted. 
 
 TRACK: This project is being submitted for the OPEN INNOVITY track.
